@@ -135,26 +135,6 @@
               </router-link>
             </div>
           </form>
-          
-          <hr class="my-4">
-          
-          <!-- User Stats -->
-          <div class="row text-center">
-            <div class="col-md-6">
-              <div class="p-3 glass-effect rounded">
-                <i class="bi bi-file-text" style="font-size: 2rem; color: var(--primary-color);"></i>
-                <h3 class="mt-2 mb-0">{{ userPostCount }}</h3>
-                <p class="text-secondary mb-0">Bài viết</p>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="p-3 glass-effect rounded">
-                <i class="bi bi-chat-dots" style="font-size: 2rem; color: var(--secondary-color);"></i>
-                <h3 class="mt-2 mb-0">{{ userCommentCount }}</h3>
-                <p class="text-secondary mb-0">Bình luận</p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -164,7 +144,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAuth } from '../store/auth'
-import { userStorage, postStorage, commentStorage } from '../utils/storage'
+import { userStorage } from '../utils/storage'
 
 const { currentUser, updateProfile } = useAuth()
 
@@ -190,15 +170,6 @@ const avatarUrl = computed(() => {
   return `https://ui-avatars.com/api/?name=${formData.value.name}&background=6366f1&color=fff&size=120`
 })
 
-const userPostCount = computed(() => {
-  if (!currentUser.value) return 0
-  return postStorage.getAll().filter(p => p.authorId === currentUser.value.id).length
-})
-
-const userCommentCount = computed(() => {
-  if (!currentUser.value) return 0
-  return commentStorage.getAll().filter(c => c.authorId === currentUser.value.id).length
-})
 
 onMounted(() => {
   if (currentUser.value) {

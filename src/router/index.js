@@ -43,6 +43,66 @@ const routes = [
     name: 'Profile',
     component: () => import('../views/Profile.vue'),
     meta: { title: 'Thông tin cá nhân', requiresAuth: true }
+  },
+  {
+    path: '/tags',
+    name: 'Tags',
+    component: () => import('../views/Tags.vue'),
+    meta: { title: 'Nhãn xét', requiresAuth: true }
+  },
+  {
+    path: '/reading-list',
+    name: 'ReadingList',
+    component: () => import('../views/ReadingList.vue'),
+    meta: { title: 'Danh sách đọc', requiresAuth: true }
+  },
+  {
+    path: '/pages',
+    name: 'Pages',
+    component: () => import('../views/Pages.vue'),
+    meta: { title: 'Trang', requiresAuth: true }
+  },
+  {
+    path: '/layout',
+    name: 'Layout',
+    component: () => import('../views/Layout.vue'),
+    meta: { title: 'Bố cục', requiresAuth: true }
+  },
+  {
+    path: '/theme',
+    name: 'Theme',
+    component: () => import('../views/Theme.vue'),
+    meta: { title: 'Chủ đề', requiresAuth: true }
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: () => import('../views/Settings.vue'),
+    meta: { title: 'Cài đặt', requiresAuth: true }
+  },
+  {
+    path: '/stats',
+    name: 'Stats',
+    component: () => import('../views/Stats.vue'),
+    meta: { title: 'Thống kê', requiresAuth: true }
+  },
+  {
+    path: '/help',
+    name: 'Help',
+    component: () => import('../views/Help.vue'),
+    meta: { title: 'Trợ giúp' }
+  },
+  {
+    path: '/posts/drafts',
+    name: 'Drafts',
+    component: () => import('../views/Home.vue'),
+    meta: { title: 'Bài nháp', requiresAuth: true }
+  },
+  {
+    path: '/posts/published',
+    name: 'Published',
+    component: () => import('../views/Home.vue'),
+    meta: { title: 'Đã xuất bản', requiresAuth: true }
   }
 ]
 
