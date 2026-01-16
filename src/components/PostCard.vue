@@ -61,7 +61,6 @@
 <script setup>
 import { computed } from 'vue'
 import { useAuth } from '../store/auth'
-import { userStorage } from '../utils/storage'
 
 const props = defineProps({
   post: {
@@ -86,8 +85,7 @@ const truncatedContent = computed(() => {
 })
 
 const authorName = computed(() => {
-  const author = userStorage.findById(props.post.authorId)
-  return author?.name || 'Unknown'
+  return props.post.authorName || 'Unknown'
 })
 
 const formattedDate = computed(() => {
