@@ -72,7 +72,6 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useAuth } from '../store/auth'
-import { userStorage } from '../utils/storage'
 
 const props = defineProps({
   comments: {
@@ -100,13 +99,14 @@ const handleAddComment = () => {
 }
 
 const getAuthorName = (authorId) => {
-  const author = userStorage.findById(authorId)
-  return author?.name || 'Unknown User'
+  const comment = props.comments.find(c => c.authorId === authorId)
+  return comment?.authorName || 'Unknown User'
 }
 
 const getAuthorAvatar = (authorId) => {
-  const author = userStorage.findById(authorId)
-  return author?.avatar || `https://ui-avatars.com/api/?name=${author?.name || 'U'}&background=6366f1&color=fff`
+  const comment = props.comments.find(c => c.authorId === authorId)
+  const name = comment?.authorName || 'U'
+  return `https://ui-avatars.com/api/?name=${name}&background=6366f1&color=fff`
 }
 
 const formatDate = (dateString) => {
