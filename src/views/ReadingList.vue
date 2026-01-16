@@ -9,7 +9,7 @@
       <p class="text-secondary mb-4">Các bài viết đã lưu để đọc sau</p>
       
       <div v-if="savedPosts.length > 0" class="row g-4">
-        <div v-for="post in saved Posts" :key="post.id" class="col-md-6 col-lg-4">
+        <div v-for="post in savedPosts" :key="post.id" class="col-md-6 col-lg-4">
           <div class="saved-card">
             <div class="saved-image" v-if="post.image">
               <img :src="post.image" :alt="post.title">
