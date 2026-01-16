@@ -1,0 +1,1 @@
+import{s as t}from"./index-BGZUegoZ.js";const o={async getAll(){return(await t.get("/posts")).data},async getById(s){return(await t.get(`/posts/${s}`)).data},async create(s){return(await t.post("/posts",s)).data},async update(s,e){await t.put(`/posts/${s}`,e)},async delete(s){await t.delete(`/posts/${s}`)}};export{o as p};
