@@ -60,12 +60,14 @@
 import { ref, computed, onMounted } from 'vue'
 import PostCard from '../components/PostCard.vue'
 import { useAuth } from '../store/auth'
-import { postStorage, commentStorage } from '../utils/storage'
+import { postsApi } from '../services/api/posts'
 
 const { isAuthenticated } = useAuth()
 
 const posts = ref([])
 const searchQuery = ref('')
+const loading = ref(false)
+const error = ref('')
 
 const filteredPosts = computed(() => {
   if (!searchQuery.value) {
@@ -79,18 +81,33 @@ const filteredPosts = computed(() => {
   )
 })
 
-const loadPosts = () => {
-  posts.value = postStorage.getAll()
+const loadPosts = async () => {
+  loading.value = true
+  error.value = ''
+  try {
+    posts.value = await postsApi.getAll()
+  } catch (err) {
+    error.value = 'Không thể tải bài viết'
+    console.error('Error loading posts:', err)
+  } finally {
+    loading.value = false
+  }
 }
 
 const getCommentCount = (postId) => {
-  return commentStorage.getByPostId(postId).length
+  const post = posts.value.find(p => p.id === postId)
+  return post?.commentCount || 0
 }
 
-const handleDeletePost = (postId) => {
+const handleDeletePost = async (postId) => {
   if (confirm('Bạn có chắc chắn muốn xóa bài viết này?')) {
-    postStorage.delete(postId)
-    loadPosts()
+    try {
+      await postsApi.delete(postId)
+      await loadPosts() // Reload posts after delete
+    } catch (err) {
+      alert('Không thể xóa bài viết')
+      console.error('Error deleting post:', err)
+    }
   }
 }
 

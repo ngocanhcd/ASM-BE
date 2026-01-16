@@ -87,7 +87,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../store/auth'
-import { postStorage, commentStorage, userStorage } from '../utils/storage'
+import { postsApi } from '../services/api/posts'
+import { commentsApi } from '../services/api/comments'
 import CommentList from '../components/CommentList.vue'
 
 const route = useRoute()
@@ -101,8 +102,7 @@ const error = ref('')
 
 const authorName = computed(() => {
   if (!post.value) return ''
-  const author = userStorage.findById(post.value.authorId)
-  return author?.name || 'Unknown'
+  return post.value.authorName || 'Unknown'
 })
 
 const formattedDate = computed(() => {
@@ -121,53 +121,62 @@ const canEdit = computed(() => {
   return currentUser.value && post.value && currentUser.value.id === post.value.authorId
 })
 
-const loadPostAndComments = () => {
+const loadPostAndComments = async () => {
   loading.value = true
   error.value = ''
   
-  const postId = route.params.id
-  const foundPost = postStorage.findById(postId)
-  
-  if (!foundPost) {
+  try {
+    const postId = route.params.id
+    
+    // Load post
+    post.value = await postsApi.getById(postId)
+    
+    // Load comments
+    comments.value = await commentsApi.getByPostId(postId)
+  } catch (err) {
     error.value = 'Không tìm thấy bài viết'
+    console.error('Error loading post:', err)
+  } finally {
     loading.value = false
-    return
   }
-  
-  post.value = foundPost
-  comments.value = commentStorage.getByPostId(postId)
-  loading.value = false
 }
 
-const handleAddComment = (content) => {
+const handleAddComment = async (content) => {
   if (!isAuthenticated.value) {
     error.value = 'Vui lòng đăng nhập để bình luận'
     return
   }
   
-  const newComment = {
-    id: Date.now().toString(),
-    postId: post.value.id,
-    authorId: currentUser.value.id,
-    content: content,
-    createdAt: new Date().toISOString()
+  try {
+    const newComment = await commentsApi.create(post.value.id, { content })
+    comments.value.push(newComment)
+  } catch (err) {
+    alert('Không thể thêm bình luận')
+    console.error('Error adding comment:', err)
   }
-  
-  commentStorage.add(newComment)
-  comments.value = commentStorage.getByPostId(post.value.id)
 }
 
-const handleDeleteComment = (commentId) => {
+const handleDeleteComment = async (commentId) => {
   if (confirm('Bạn có chắc chắn muốn xóa bình luận này?')) {
-    commentStorage.delete(commentId)
-    comments.value = commentStorage.getByPostId(post.value.id)
+    try {
+      await commentsApi.delete(post.value.id, commentId)
+      comments.value = comments.value.filter(c => c.id !== commentId)
+    } catch (err) {
+      alert('Không thể xóa bình luận')
+      console.error('Error deleting comment:', err)
+    }
   }
 }
 
-const handleDelete = () => {
+const handleDelete = async () => {
   if (confirm('Bạn có chắc chắn muốn xóa bài viết này?')) {
-    postStorage.delete(post.value.id)
-    router.push('/')
+    try {
+      await postsApi.delete(post.value.id)
+      router.push('/')
+    } catch (err) {
+      alert('Không thể xóa bài viết')
+      console.error('Error deleting post:', err)
+    }
   }
 }
 

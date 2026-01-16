@@ -97,7 +97,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '../store/auth'
-import { postStorage } from '../utils/storage'
+import { postsApi } from '../services/api/posts'
 
 const router = useRouter()
 const route = useRoute()
@@ -112,6 +112,7 @@ const formData = ref({
 const imagePreview = ref('')
 const error = ref('')
 const success = ref('')
+const loading = ref(false)
 
 const isEditMode = computed(() => !!route.params.id)
 
@@ -121,29 +122,29 @@ onMounted(() => {
   }
 })
 
-const loadPost = () => {
-  const post = postStorage.findById(route.params.id)
-  
-  if (!post) {
+const loadPost = async () => {
+  try {
+    const post = await postsApi.getById(route.params.id)
+    
+    // Check if current user is the author
+    if (post.authorId !== currentUser.value.id) {
+      error.value = 'Bạn không có quyền chỉnh sửa bài viết này'
+      setTimeout(() => router.push('/'), 2000)
+      return
+    }
+    
+    formData.value = {
+      title: post.title,
+      content: post.content,
+      image: post.image || ''
+    }
+    
+    if (post.image) {
+      imagePreview.value = post.image
+    }
+  } catch (err) {
     error.value = 'Không tìm thấy bài viết'
-    return
-  }
-  
-  // Check if current user is the author
-  if (post.authorId !== currentUser.value.id) {
-    error.value = 'Bạn không có quyền chỉnh sửa bài viết này'
-    setTimeout(() => router.push('/'), 2000)
-    return
-  }
-  
-  formData.value = {
-    title: post.title,
-    content: post.content,
-    image: post.image || ''
-  }
-  
-  if (post.image) {
-    imagePreview.value = post.image
+    console.error('Error loading post:', err)
   }
 }
 
@@ -176,38 +177,37 @@ const removeImage = () => {
   imagePreview.value = ''
 }
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   error.value = ''
   success.value = ''
+  loading.value = true
   
   try {
     if (isEditMode.value) {
       // Update existing post
-      postStorage.update(route.params.id, {
+      await postsApi.update(route.params.id, {
         title: formData.value.title,
         content: formData.value.content,
-        image: formData.value.image
+        image: formData.value.image || null
       })
       success.value = 'Cập nhật bài viết thành công!'
     } else {
       // Create new post
-      const newPost = {
-        id: Date.now().toString(),
+      await postsApi.create({
         title: formData.value.title,
         content: formData.value.content,
-        image: formData.value.image,
-        authorId: currentUser.value.id,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-      postStorage.add(newPost)
+        image: formData.value.image || null
+      })
       success.value = 'Đăng bài thành công!'
     }
     
     // Redirect to home after 1 second
     setTimeout(() => router.push('/'), 1000)
   } catch (err) {
-    error.value = err.message
+    error.value = err.response?.data?.message || 'Có lỗi xảy ra'
+    console.error('Error submitting post:', err)
+  } finally {
+    loading.value = false
   }
 }
 </script>

@@ -1,65 +1,64 @@
 import { reactive, computed } from 'vue'
-import { sessionStorage, userStorage } from '../utils/storage'
+import { authApi } from '../services/api/auth'
 
 // Reactive authentication state
 const state = reactive({
-  currentUser: sessionStorage.getCurrentUser(),
-  isAuthenticated: !!sessionStorage.getCurrentUser()
+  currentUser: JSON.parse(localStorage.getItem('currentUser') || 'null'),
+  token: localStorage.getItem('token') || null,
+  isAuthenticated: !!localStorage.getItem('token')
 })
 
 // Authentication store with composition API
 export const useAuth = () => {
-  const login = (email, password) => {
-    const user = userStorage.findByEmail(email)
-    
-    if (!user) {
-      throw new Error('Người dùng không tồn tại')
+  const login = async (email, password) => {
+    try {
+      // Call API
+      const response = await authApi.login({ email, password })
+      
+      // Store token and user
+      localStorage.setItem('token', response.token)
+      localStorage.setItem('currentUser', JSON.stringify(response.user))
+      
+      state.token = response.token
+      state.currentUser = response.user
+      state.isAuthenticated = true
+      
+      return response.user
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Đăng nhập thất bại')
     }
-    
-    if (user.password !== password) {
-      throw new Error('Mật khẩu không đúng')
-    }
-    
-    // Don't store password in session
-    const { password: _, ...userWithoutPassword } = user
-    state.currentUser = userWithoutPassword
-    state.isAuthenticated = true
-    sessionStorage.setCurrentUser(userWithoutPassword)
-    
-    return userWithoutPassword
   }
 
-  const register = (userData) => {
-    const existingUser = userStorage.findByEmail(userData.email)
-    
-    if (existingUser) {
-      throw new Error('Email đã được sử dụng')
+  const register = async (userData) => {
+    try {
+      // Call API
+      const response = await authApi.register({
+        email: userData.email,
+        password: userData.password,
+        fullName: userData.name
+      })
+      
+      // Store token and user (auto login after registration)
+      localStorage.setItem('token', response.token)
+      localStorage.setItem('currentUser', JSON.stringify(response.user))
+      
+      state.token = response.token
+      state.currentUser = response.user
+      state.isAuthenticated = true
+      
+      return response.user
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Đăng ký thất bại')
     }
-    
-    const newUser = {
-      id: Date.now().toString(),
-      name: userData.name,
-      email: userData.email,
-      password: userData.password,
-      avatar: userData.avatar || '',
-      createdAt: new Date().toISOString()
-    }
-    
-    userStorage.add(newUser)
-    
-    // Auto login after registration
-    const { password: _, ...userWithoutPassword } = newUser
-    state.currentUser = userWithoutPassword
-    state.isAuthenticated = true
-    sessionStorage.setCurrentUser(userWithoutPassword)
-    
-    return userWithoutPassword
   }
 
   const logout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('currentUser')
+    
+    state.token = null
     state.currentUser = null
     state.isAuthenticated = false
-    sessionStorage.clearCurrentUser()
   }
 
   const updateProfile = (updates) => {
@@ -67,29 +66,18 @@ export const useAuth = () => {
       throw new Error('Chưa đăng nhập')
     }
     
-    // If email is being updated, check if it's already in use
-    if (updates.email && updates.email !== state.currentUser.email) {
-      const existingUser = userStorage.findByEmail(updates.email)
-      if (existingUser) {
-        throw new Error('Email đã được sử dụng')
-      }
-    }
+    // Update local user info (API doesn't have profile update endpoint yet)
+    state.currentUser = { ...state.currentUser, ...updates }
+    localStorage.setItem('currentUser', JSON.stringify(state.currentUser))
     
-    userStorage.update(state.currentUser.id, updates)
-    
-    // Update current session (exclude password from session)
-    const updatedUser = userStorage.findById(state.currentUser.id)
-    const { password: _, ...userWithoutPassword } = updatedUser
-    state.currentUser = userWithoutPassword
-    sessionStorage.setCurrentUser(userWithoutPassword)
-    
-    return userWithoutPassword
+    return state.currentUser
   }
 
   return {
     // State
     currentUser: computed(() => state.currentUser),
     isAuthenticated: computed(() => state.isAuthenticated),
+    token: computed(() => state.token),
     
     // Actions
     login,
