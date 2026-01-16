@@ -144,7 +144,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAuth } from '../store/auth'
-import { userStorage } from '../utils/storage'
 
 const { currentUser, updateProfile } = useAuth()
 
@@ -173,11 +172,10 @@ const avatarUrl = computed(() => {
 
 onMounted(() => {
   if (currentUser.value) {
-    const user = userStorage.findById(currentUser.value.id)
     formData.value = {
-      name: user.name,
-      email: user.email,
-      avatar: user.avatar || ''
+      name: currentUser.value.fullName || currentUser.value.name || '',
+      email: currentUser.value.email || '',
+      avatar: currentUser.value.avatar || ''
     }
   }
 })
@@ -215,37 +213,10 @@ const handleUpdateProfile = () => {
       avatar: formData.value.avatar
     }
     
-    // Handle password change
+    // Password change not supported by backend yet
     if (passwordData.value.current || passwordData.value.new || passwordData.value.confirm) {
-      // Get current user with password
-      const user = userStorage.findById(currentUser.value.id)
-      
-      if (!passwordData.value.current) {
-        error.value = 'Vui lòng nhập mật khẩu hiện tại'
-        return
-      }
-      
-      if (user.password !== passwordData.value.current) {
-        error.value = 'Mật khẩu hiện tại không đúng'
-        return
-      }
-      
-      if (!passwordData.value.new) {
-        error.value = 'Vui lòng nhập mật khẩu mới'
-        return
-      }
-      
-      if (passwordData.value.new.length < 6) {
-        error.value = 'Mật khẩu mới phải có ít nhất 6 ký tự'
-        return
-      }
-      
-      if (passwordData.value.new !== passwordData.value.confirm) {
-        error.value = 'Mật khẩu xác nhận không khớp'
-        return
-      }
-      
-      updates.password = passwordData.value.new
+      error.value = 'Đổi mật khẩu chưa được hỗ trợ. Vui lòng chỉ cập nhật thông tin cá nhân.'
+      return
     }
     
     updateProfile(updates)

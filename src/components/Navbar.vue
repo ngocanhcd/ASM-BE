@@ -34,7 +34,7 @@
             <li class="nav-item">
               <router-link to="/profile" class="nav-link">
                 <i class="bi bi-person-circle me-1"></i>
-                {{ currentUser?.name }}
+                {{ currentUser?.fullName }}
               </router-link>
             </li>
             <li class="nav-item ms-lg-2">
