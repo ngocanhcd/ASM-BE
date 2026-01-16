@@ -27,6 +27,14 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Verify deployment files
+        run: |
+          echo "Checking for .nojekyll..."
+          ls -la dist/.nojekyll || echo ".nojekyll not found!"
+          echo "Checking for 404.html..."
+          ls -la dist/404.html || echo "404.html not found!"
+
+
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
